@@ -1,0 +1,29 @@
+{
+  "name": "kickback",
+  "version": "1.0.0",
+  "description": "web handler and CMS",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js test-site"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hans-strudel/kickback.git"
+  },
+  "keywords": [
+    "cms",
+    "web",
+    "site",
+    "static",
+    "easy",
+    "fast",
+    "auto",
+    "automated"
+  ],
+  "author": "Hans Strausl",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hans-strudel/kickback/issues"
+  },
+  "homepage": "https://github.com/hans-strudel/kickback#readme"
+}
