@@ -6,7 +6,8 @@ var file_type = 'utf8'
 	
 var server = {
 	map: {
-		'': 'index.html' // base
+		'': 'index.html', // base
+		404: '404.html'
 	},
 	ignore: [
 		'.git'
@@ -14,6 +15,7 @@ var server = {
 	baseDir: process.cwd(),
 	files: {},
 	running: false,
+	port: 8080,
 	init: function(dir){
 		dir = dir || server.baseDir;
 		if (!server.running) server.baseDir = dir;
@@ -26,16 +28,11 @@ var server = {
 					console.log(dir + path.sep + file);
 					console.log(fs.statSync(dir + path.sep + file).isDirectory())
 					if (!fs.statSync(dir + path.sep + file).isDirectory()){
-							if (file.indexOf('.png') > -1){
-								file_type = 'binary';
-							} else {
-								file_type = 'utf8';
-							}
-						fs.readFile(dir + path.sep + file, file_type, function(err, data){
+						fs.readFile(dir + path.sep + file, function(err, data){
 							if (err) throw new Error(err);
 							server.files[file] = data;
 							if (++fileCount > files.length - 1){
-								if (!server.running) server.run();
+								if (!server.running) server.run(server.port);
 							}
 						})
 					} else {
@@ -49,27 +46,21 @@ var server = {
 		})
 	},
 	requestHandler: function(request, response){
+		console.log('request');
 		console.log(request.url);
 		var file = path.parse(request.url).base;
 		if (server.map[file]){
 			file = server.map[file];
 		}
-		if (file.indexOf('.png') > -1){
-			response.writeHead(200, {'Content-Type': 'image/png'})
-		}
-		response.end(server.files[file] || ''); // serve the file data
+		console.log(file);
+		console.log(server.files[file])
+		response.end(server.files[file] || server.files[404]); // serve the file data
 	},
 	watch: function(dir){
-		
 		fs.watch(dir, function(err, file){
 			console.log('serv', server.baseDir);
 			console.log(dir + path.sep + file);
-			if (file.indexOf('.png') > -1){
-				file_type = 'binary';
-			} else {
-				file_type = 'utf8';
-			}
-			fs.readFile(dir + path.sep + file, file_type, function(err, data){
+			fs.readFile(dir + path.sep + file, function(err, data){
 				console.log(file);
 				if (err && err.code == 'ENOENT'){
 					console.log("File removed: ", file);
