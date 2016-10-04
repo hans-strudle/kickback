@@ -1,5 +1,10 @@
-var http = require('http');
+var kickback = require('./server.js');
 
-var server = require('./server.js');
-server.port = 7777;
-server.init(process.argv[2]);
+var PORT = 8012;
+
+var dir = process.argv[2];
+
+kickback.init(dir, function(){
+	console.log(kickback.files);
+	kickback.start(PORT);
+});

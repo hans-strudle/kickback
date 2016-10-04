@@ -2,8 +2,8 @@ var http = require('http'),
 	fs = require('fs'),
 	path = require('path');
 
-var file_type = 'utf8'
-	
+var totalFiles;
+var fileCount = 0;
 var server = {
 	map: {
 		'': 'index.html', // base
@@ -16,28 +16,32 @@ var server = {
 	files: {},
 	running: false,
 	port: 8080,
-	init: function(dir){
+	init: function(dir, cb){
 		dir = dir || server.baseDir;
-		if (!server.running) server.baseDir = dir;
+		cb = cb || server.run;
 		server.watch(dir);
 		fs.readdir(dir, function(err, files){
 			if (err) throw new Error(err);
-			var fileCount = 0;
+			totalFiles = (totalFiles || 0) + files.length;
 			files.forEach(function(file, index){
 				if (server.ignore.indexOf(file) < 0){
-					console.log(dir + path.sep + file);
-					console.log(fs.statSync(dir + path.sep + file).isDirectory())
 					if (!fs.statSync(dir + path.sep + file).isDirectory()){
 						fs.readFile(dir + path.sep + file, function(err, data){
 							if (err) throw new Error(err);
+							var str = '';
+							dir.split(path.sep).forEach(function(step, ind){
+								if (ind > 0) str += step + '/';
+							})
+							file = str + file;
+							
 							server.files[file] = data;
-							if (++fileCount > files.length - 1){
-								if (!server.running) server.run(server.port);
+							if (++fileCount > totalFiles - 1){
+								if (!server.running) cb();
 							}
 						})
 					} else {
 						fileCount++;
-						server.init(dir + path.sep + file);
+						server.init(dir + path.sep + file, cb);
 					}
 				} else {
 					fileCount++;
@@ -46,37 +50,34 @@ var server = {
 		})
 	},
 	requestHandler: function(request, response){
-		console.log('request');
-		console.log(request.url);
-		var file = path.parse(request.url).base;
+		var file = request.url.replace('/', '');
+		console.log('Request for: ', file)
 		if (server.map[file]){
 			file = server.map[file];
 		}
-		console.log(file);
-		console.log(server.files[file])
-		response.end(server.files[file] || server.files[404]); // serve the file data
+		response.end(server.files[file] || server.files[server.map[404]]); // serve the file data
 	},
 	watch: function(dir){
 		fs.watch(dir, function(err, file){
-			console.log('serv', server.baseDir);
-			console.log(dir + path.sep + file);
 			fs.readFile(dir + path.sep + file, function(err, data){
-				console.log(file);
 				if (err && err.code == 'ENOENT'){
 					console.log("File removed: ", file);
 				} else if (err) {
 					throw new Error(err);
 				}
-				console.log(data);
+				var str = '';
+				dir.split(path.sep).forEach(function(step, ind){
+					if (ind > 0) str += step + '/';
+				})
+				file = str + file;
 				server.files[file] = data;
 				console.log("File added: ", file);
 			})
 		})
 	},
-	run: function(port){
-		console.log(server.files);
+	start: function(port){
 		port = port || 8080; // default port
-		(http.createServer(server.requestHandler)).listen(port, function(){ 
+		(http.createServer(server.requestHandler)).listen(port, function(){
 			// set requestHandler and start listen on port
 			server.running = true;
 			console.log('Server Running on port: ' + port)

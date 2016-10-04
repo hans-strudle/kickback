@@ -3,3 +3,9 @@ div {
 	margin: 0 auto;
 	text-align: center;
 }
+
+pre {
+	width: 250px;
+	margin: 0 auto;
+	background-color: #EEEEEE;
+}
