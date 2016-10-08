@@ -1,6 +1,7 @@
 var http = require('http'),
 	fs = require('fs'),
-	path = require('path');
+	path = require('path'),
+	url = require('url');
 
 var totalFiles;
 var fileCount = 0;
@@ -19,14 +20,14 @@ var server = {
 		'': 'index.html', // base
 		404: '404.html'
 	},
-	customHeaders: {
-
-	},
+	customHeaders: {},
+	endpoints: {},
 	ignore: [
 		'.git'
 	],
 	baseDir: process.cwd(),
 	files: {},
+	totalFiles: 0,
 	initialized: false,
 	running: false,
 	port: 8080,
@@ -35,11 +36,10 @@ var server = {
 		cb = cb || server.run;
 		if (typeof dir !== 'string') throw new Error('First argument must be a String');
 		if (typeof cb !== 'function') throw new Error('Second argument must be a Function');
-		
 		server.watch(dir);
 		fs.readdir(dir, function(err, files){
 			if (err) throw new Error(err);
-			totalFiles = (totalFiles || 0) + files.length;
+			server.totalFiles = server.totalFiles + files.length;
 			files.forEach(function(file, index){
 				if (server.ignore.indexOf(file) < 0){
 					if (!fs.statSync(dir + path.sep + file).isDirectory()){
@@ -49,7 +49,7 @@ var server = {
 							file = normDir(dir, file);
 							
 							server.files[file] = data;
-							if (++fileCount > totalFiles - 1){
+							if (++fileCount > server.totalFiles - 1){
 								if (!server.running){
 									server.initialized = true;
 									cb();
@@ -66,18 +66,22 @@ var server = {
 			})
 		})
 	},
-	requestHandler: function(request, response){
-		var file = request.url.replace('/', '');
+	onRequest: function(request, response){
+		var reqInfo = url.parse(request.url)
+		var file = reqInfo.pathname.replace('/', '');
 		console.log('Request for: ', file);
-		if (server.map[file]){
-			file = server.map[file];
-		}
 		if (server.customHeaders[file]){
 			for (var header in server.customHeaders[file]){
 				response.setHeader(header, server.customHeaders[file][header]);
 			}
 		}
-		response.end(server.files[file] || server.files[server.map[404]]); // serve the file data
+		if (server.endpoints[file]){
+			server.endpoints[file](file, reqInfo.query, request);
+		}
+		if (server.map[file]){
+			file = server.map[file];
+		}
+		response.end(server.files[file] || server.files[server.map[404]]);
 	},
 	watch: function(dir){
 		dir = dir || server.baseDir;
@@ -102,7 +106,7 @@ var server = {
 	run: function(port){
 		port = parseInt(port) || server.port; // default port
 
-		(http.createServer(server.requestHandler)).listen(port, function(){
+		(http.createServer(server.onRequest)).listen(port, function(){
 			// set requestHandler and start listen on port
 			server.running = true;
 			console.log('Server Running on port: ' + port)
