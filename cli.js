@@ -1,6 +1,6 @@
 var kickback = require('./server.js')
 
-var dir = process.argv[2];
+var dir = process.argv[2] || '.';
 
 dir = dir.replace(/\\/g, '/')
 

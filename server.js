@@ -32,6 +32,7 @@ var server = {
 	running: false,
 	port: 8080,
 	init: function(dir, cb){
+		console.log(path.resolve(dir))
 		dir = dir || server.baseDir;
 		cb = cb || server.run;
 		if (typeof dir !== 'string') throw new Error('First argument must be a String');
@@ -45,9 +46,7 @@ var server = {
 					if (!fs.statSync(dir + path.sep + file).isDirectory()){
 						fs.readFile(dir + path.sep + file, function(err, data){
 							if (err) throw new Error(err);
-							
 							file = normDir(dir, file);
-							
 							server.files[file] = data;
 							if (++fileCount > server.totalFiles - 1){
 								if (!server.running){
@@ -84,9 +83,9 @@ var server = {
 		response.end(server.files[file] || server.files[server.map[404]]);
 	},
 	watch: function(dir){
+		console.log(dir);
 		dir = dir || server.baseDir;
-		if (typeof dir !== 'string') throw new Error('Argument must be a string')
-		
+		if (typeof dir !== 'string') throw new Error('Argument must be a string');
 		fs.watch(dir, function(watcherr, file){
 			if (server.ignore.indexOf(normDir(dir, file)) < 0){
 				fs.readFile(dir + path.sep + file, function(err, data){
@@ -105,7 +104,6 @@ var server = {
 	},
 	run: function(port){
 		port = parseInt(port) || server.port; // default port
-
 		(http.createServer(server.onRequest)).listen(port, function(){
 			// set requestHandler and start listen on port
 			server.running = true;

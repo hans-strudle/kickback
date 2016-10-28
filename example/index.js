@@ -1,4 +1,5 @@
-var kickback = require('../server.js');
+var kickback = require('../server.js'),
+	path = require('path');
 
 var qs = require('querystring');
 
