@@ -51,6 +51,7 @@ var kickback = {
 		var url = kickback.mapper(url.pathname, req) || url.pathname;
 		// if no endpoint, just try and serve the file
 		var result = kickback.endpoints[url] || kickback.serve(url, function(result){
+			if (!result) result = '404';
 			var header = kickback.headers(url, result, function(header){
 				kickback.sendRes(res, header, result); // serve & header sync
 			});
@@ -71,7 +72,7 @@ var kickback = {
 	sendRes: function(res, header, result){
 		if (header && result){ // still waiting
 			res.writeHead(header.code, header.headers);
-			res.end(result);
+			res.end(result || '');
 			return true;
 		}
 		return false;
