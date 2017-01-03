@@ -1,6 +1,7 @@
 var http = require('http'),
 	URL = require('url'),
-    fs = require('fs');
+    fs = require('fs'),
+    qs = require('querystring');
 
 var kickback = {
     basedir: '.',
@@ -35,10 +36,10 @@ var kickback = {
 		}
 		return head;
 	},
-	onRequest: function(url, query, req, cb){
+	every: function(url, query, req, cb){
 		// this will run everytime a request is made
 		kickback.log('request path:', url);
-		kickback.log('request query:', query);
+		kickback.log('request query:', JSON.stringify(query));
 	},
 	onStatus: function(code, cb){
 			return kickback.serve('/' + code + '.html') || ('Error! status code: ' + code);
@@ -46,13 +47,13 @@ var kickback = {
     onRequest: function(req, res){
 		var url  = URL.parse(req.url);
 		var query = qs.parse(url.query);
-		kickback.onRequest(url.pathname, query, req);
+		kickback.every(url.pathname, query, req);
 		var url = kickback.mapper(url.pathname, req) || url.pathname;
 		// if no endpoint, just try and serve the file
 		var result = kickback.endpoints[url] || kickback.serve(url, function(result){
 			var header = kickback.headers(url, result, function(header){
 				kickback.sendRes(res, header, result); // serve & header sync
-			}):
+			});
 			kickback.sendRes(res, header, result);
 		});
 		// endpoint can be static or a function
