@@ -1,6 +1,6 @@
 {
   "name": "kickback",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "web handler and CMS",
   "main": "kickback.js",
   "bin": {
